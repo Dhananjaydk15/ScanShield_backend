@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        APP_NAME = "fastapi-app"
-        REGISTRY = "fastapi-app"   // change if using DockerHub later
-    }
-
     stages {
 
         stage('Clone') {
@@ -14,51 +9,25 @@ pipeline {
             }
         }
 
-        stage('Get Version Tag') {
+        stage('Build App with Docker Compose') {
             steps {
                 script {
-                    // use short commit hash as image tag
-                    COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    IMAGE_TAG = "${APP_NAME}:${COMMIT_HASH}"
-                    echo "Building image: ${IMAGE_TAG}"
+                    sh """
+                    docker compose build
+                    """
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Deploy App') {
             steps {
                 script {
-                    dockerImage = docker.build(IMAGE_TAG)
+                    sh """
+                    docker compose down
+                    docker compose up -d --force-recreate
+                    """
                 }
             }
         }
-
-        stage('Stop & Remove Old Container') {
-            steps {
-                sh """
-                docker stop ${APP_NAME} || true
-                docker rm ${APP_NAME} || true
-                """
-            }
-        }
-
-stage('Run New Container') {
-    steps {
-        script {
-            sh """
-            # Free port 8000 if in use
-            container_id=\$(docker ps -q --filter "publish=8000")
-            if [ ! -z "\$container_id" ]; then
-                echo "Port 8000 is in use by container \$container_id. Stopping..."
-                docker stop \$container_id
-                docker rm \$container_id
-            fi
-
-            docker run -d --name ${APP_NAME} -p 8000:8000 ${IMAGE_TAG}
-            """
-        }
-    }
-}
-
     }
 }
