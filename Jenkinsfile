@@ -42,12 +42,23 @@ pipeline {
             }
         }
 
-        stage('Run New Container') {
-            steps {
-                sh """
-                docker run -d --name ${APP_NAME} -p 8000:8000 ${IMAGE_TAG}
-                """
-            }
+stage('Run New Container') {
+    steps {
+        script {
+            sh """
+            # Free port 8000 if in use
+            container_id=\$(docker ps -q --filter "publish=8000")
+            if [ ! -z "\$container_id" ]; then
+                echo "Port 8000 is in use by container \$container_id. Stopping..."
+                docker stop \$container_id
+                docker rm \$container_id
+            fi
+
+            docker run -d --name ${APP_NAME} -p 8000:8000 ${IMAGE_TAG}
+            """
         }
+    }
+}
+
     }
 }
