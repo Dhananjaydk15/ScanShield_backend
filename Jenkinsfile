@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = "fastapi-app"
+        REGISTRY = "fastapi-app"   // change if using DockerHub later
+    }
+
     stages {
 
         stage('Clone') {
@@ -9,31 +14,39 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Get Version Tag') {
             steps {
                 script {
-                    def appName = "fastapi-app"
-                    def dockerImage = docker.build("${appName}:${BUILD_NUMBER}")
+                    // use short commit hash as image tag
+                    COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    IMAGE_TAG = "${APP_NAME}:${COMMIT_HASH}"
+                    echo "Building image: ${IMAGE_TAG}"
                 }
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                docker stop fastapi-container || true
-                docker rm fastapi-container || true
-                '''
+                script {
+                    dockerImage = docker.build(IMAGE_TAG)
+                }
+            }
+        }
+
+        stage('Stop & Remove Old Container') {
+            steps {
+                sh """
+                docker stop ${APP_NAME} || true
+                docker rm ${APP_NAME} || true
+                """
             }
         }
 
         stage('Run New Container') {
             steps {
-                sh '''
-docker compose down
-docker compose up --build -d
-
-                '''
+                sh """
+                docker run -d --name ${APP_NAME} -p 8000:8000 ${IMAGE_TAG}
+                """
             }
         }
     }
