@@ -14,19 +14,17 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=ScanShield \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=${SONAR_HOST_URL} \
-                        -Dsonar.login=${SONAR_AUTH_TOKEN}
-                    """
-                }
-            }
-        }
+stage('SonarQube Analysis') {
+    steps {
+        sh """
+            sonar-scanner \
+            -Dsonar.projectKey=ScanShield \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=squ_66b56e13a3ca9591c5f25832ac7135e5b5675326
+        """
+    }
+}
 
         stage('Quality Gate') {
             steps {
