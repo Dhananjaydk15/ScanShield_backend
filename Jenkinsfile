@@ -17,11 +17,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
                     sh """
-                    sonar-scanner \
-                        -Dsonar.projectKey=ScanShield \
-                        -Dsonar.sources=. \
-                        -Dsonar.language=py \
-                        -Dsonar.host.url=http://localhost:9000
+                    sonar-scanner
                     """
                 }
             }
