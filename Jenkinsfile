@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER = 'sonarqube' // Jenkins SonarQube server name
+        SONAR_TOKEN = 'squ_e68fe8e90af5b9a142b05bc33e321ec6fea2aa7b'
     }
 
     stages {
@@ -12,17 +13,19 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh """
-                    /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
-                    -Dsonar.projectKey=ScanShield \
-                    -Dsonar.sources=.
-                    """
-                }
-            }
+stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('sonarqube') {
+            sh """
+            /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
+            -Dsonar.projectKey=ScanShield \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -Dsonar.login=$SONAR_TOKEN
+            """
         }
+    }
+}
 
         stage('Quality Gate') {
             steps {
