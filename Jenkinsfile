@@ -13,13 +13,19 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-withSonarQubeEnv('sonarqube') {
-    sh 'SonarScanner'
+stage('SonarQube Analysis') {
+    steps {
+        sh """
+        docker run --rm \
+            -e SONAR_HOST_URL=http://sonarqube:9000 \
+            -e SONAR_LOGIN=<YOUR_SONAR_TOKEN> \
+            -v $WORKSPACE:/usr/src \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.projectKey=ScanShield \
+            -Dsonar.sources=/usr/src
+        """
+    }
 }
-            }
-        }
 
         stage('Quality Gate') {
             steps {
