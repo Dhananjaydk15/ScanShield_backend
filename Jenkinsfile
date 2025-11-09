@@ -14,18 +14,12 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh """
-                        /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
-                        -Dsonar.projectKey=ScanShield \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.token=squ_66b56e13a3ca9591c5f25832ac7135e5b5675326
-
-                    """
-                }
+withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+    sh "/opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner -Dsonar.projectKey=ScanShield -Dsonar.sources=."
+}
             }
         }
+        
 
         stage('Quality Gate') {
             steps {
