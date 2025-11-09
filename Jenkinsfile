@@ -17,7 +17,7 @@ pipeline {
 stage('SonarQube Analysis') {
     steps {
         sh """
-            /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/binsonar-scanner \
+            /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
             -Dsonar.projectKey=ScanShield \
             -Dsonar.sources=. \
             -Dsonar.host.url=http://localhost:9000 \
