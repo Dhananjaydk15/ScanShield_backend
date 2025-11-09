@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    tools {
+        sonarQubeScanner 'SonarScannerLatest'
+    }
+
+    environment {
+        SONARQUBE_SERVER = 'MySonar'   // SonarQube server name from Jenkins config
+    }
+
     stages {
 
         stage('Clone') {
@@ -9,24 +17,38 @@ pipeline {
             }
         }
 
-        stage('Build App with Docker Compose') {
+        stage('SonarQube Analysis') {
             steps {
-                script {
+                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
                     sh """
-                    docker compose build
+                    sonar-scanner \
+                        -Dsonar.projectKey=ScanShield \
+                        -Dsonar.sources=. \
+                        -Dsonar.language=py \
+                        -Dsonar.host.url=http://<sonar-server>:9000
                     """
                 }
             }
         }
 
+        stage('Quality Gate') {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
+
+        stage('Build App with Docker Compose') {
+            steps {
+                sh "docker compose build"
+            }
+        }
+
         stage('Deploy App') {
             steps {
-                script {
-                    sh """
-                    docker compose down
-                    docker compose up -d --force-recreate
-                    """
-                }
+                sh """
+                docker compose down
+                docker compose up -d --force-recreate
+                """
             }
         }
     }
