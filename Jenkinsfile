@@ -20,7 +20,7 @@ pipeline {
                     /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.host.url=http://localhost:9000 \
                         -Dsonar.login=$SONAR_TOKEN
                     """
                 }
