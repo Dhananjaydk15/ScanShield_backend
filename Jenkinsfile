@@ -21,7 +21,7 @@ pipeline {
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
                         -Dsonar.language=py \
-                        -Dsonar.host.url=http://<sonar-server>:9000
+                        -Dsonar.host.url=http://localhost:9000
                     """
                 }
             }
