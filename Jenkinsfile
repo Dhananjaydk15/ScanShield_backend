@@ -17,7 +17,7 @@ stage('SonarQube Analysis') {
     steps {
         sh """
         docker run --rm \
-            -e SONAR_HOST_URL=http://localhost:9000 \
+            -e SONAR_HOST_URL=http://sonarqube:9000 \
             -e SONAR_LOGIN="squ_8c1b2e9d1c6f0cc61fee642291520e040fb7c4c0" \
             -v $WORKSPACE:/usr/src \
             sonarsource/sonar-scanner-cli \
