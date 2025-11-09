@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        sonarRunner 'SonarScanner'   // Match the tool name from Jenkins Global Tool Configuration
-    }
-
     environment {
         SONARQUBE_SERVER = 'sonarqube'  
     }
