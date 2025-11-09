@@ -21,17 +21,17 @@ pipeline {
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_TOKEN
+                        -Dsonar.token=$SONAR_TOKEN
                     """
                 }
             }
         }
 
-        // stage('Quality Gate') {
-        //     steps {
-        //         waitForQualityGate abortPipeline: true
-        //     }
-        // }
+        stage('Quality Gate') {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
 
         stage('Build App') {
             steps {
