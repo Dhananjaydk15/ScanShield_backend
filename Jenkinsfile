@@ -20,7 +20,8 @@ pipeline {
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.token=YOUR_SONAR_TOKEN
+                        -Dsonar.token=squ_66b56e13a3ca9591c5f25832ac7135e5b5675326
+
                     """
                 }
             }
