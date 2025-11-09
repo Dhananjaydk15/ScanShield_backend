@@ -1,12 +1,9 @@
 pipeline {
     agent any
 
-    tools {
-        sonarScanner 'SonarScanner'  // Name from Jenkins Global Tool Configuration
-    }
-
     environment {
-        SONARQUBE_SERVER = 'sonarqube'  // Name from Jenkins SonarQube configuration
+        SONARQUBE_SERVER = 'sonarqube'  // Jenkins SonarQube configuration name
+        SONAR_AUTH_TOKEN = 'squ_66b56e13a3ca9591c5f25832ac7135e5b5675326' // replace with your token
     }
 
     stages {
@@ -19,13 +16,13 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
                     sh """
                         sonar-scanner \
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=squ_66b56e13a3ca9591c5f25832ac7135e5b5675326
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=${SONAR_AUTH_TOKEN}
                     """
                 }
             }
@@ -33,7 +30,6 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                // This will abort the pipeline if the Quality Gate fails
                 waitForQualityGate abortPipeline: true
             }
         }
