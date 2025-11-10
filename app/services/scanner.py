@@ -1,7 +1,7 @@
 # services/scanner.py
 from typing import Dict, Any, List
 import nmap
-import requests
+import requests             
 from requests.exceptions import RequestException
 
 # Important HTTP Security Headers
