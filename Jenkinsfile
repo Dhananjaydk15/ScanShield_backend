@@ -48,4 +48,16 @@ pipeline {
             }
         }
     }
+        post {
+        success {
+            emailext (
+                to: 'dhananjaykhairnar15@gmail.com',
+                subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
+                body: """<p>Hi Team,</p>
+                         <p>The Jenkins build <b>#${env.BUILD_NUMBER}</b> completed successfully.</p>
+                         <p>Regards,<br>Jenkins</p>""",
+                mimeType: 'text/html'
+            )
+        }
+    }
 }
