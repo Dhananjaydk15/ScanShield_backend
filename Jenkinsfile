@@ -32,19 +32,24 @@ pipeline {
 stage('Approval Before Build') {
   steps {
     script {
-      def result = input(
-        message: "Do you want to proceed to Build the App?",
-        ok: "Approve",
-        submitterParameter: 'APPROVER'   // will contain who approved
-      )
-      // Jenkins stores the returned variable in the binding; fetch it:
-      def approver = env.APPROVER ?: result   // depending on version, result or env var populated
-      echo "Approved by: ${approver}"
-
-      // Allowed list
       def allowed = ['admin', 'auditor']
-      if (!allowed.contains(approver)) {
-        error("Unauthorized approver: ${approver}. Only ${allowed} can approve.")
+
+      while (true) {
+        def approver = input(
+          message: "Approval required to proceed.\nOnly allowed: ${allowed}",
+          ok: "Approve",
+          submitterParameter: 'APPROVER'
+        )
+
+        echo "Attempted approval by: ${approver}"
+
+        if (allowed.contains(approver)) {
+          echo "Approved by allowed user: ${approver}"
+          break   // exit loop and continue pipeline
+        } else {
+          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          // loop continues → waits again
+        }
       }
     }
   }
