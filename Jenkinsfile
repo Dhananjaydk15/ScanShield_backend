@@ -28,72 +28,59 @@ pipeline {
             }
         }
 
-        /*** 🔥 Stage 1: Approval & Audit Logging ***/
-        stage('Approval Before Build') {
-            steps {
-                script {
-                    def allowed = ['admin', 'auditor']
-                    def auditLog = "approval_audit_stage1.log"
+        /*** 🔥 Add Manual Approval Here ***/
+stage('Approval Before Build') {
+  steps {
+    script {
+      def allowed = ['admin', 'auditor']
 
-                    writeFile file: auditLog, text: "=== Approval Audit Log: Stage 1 ===\n"
+      while (true) {
+        def approver = input(
+          message: "Approval required to proceed.\nOnly allowed: ${allowed}",
+          ok: "Approve",
+          submitterParameter: 'APPROVER'
+        )
 
-                    while (true) {
-                        def approver = input(
-                          message: "Approval required.\nOnly allowed: ${allowed}",
-                          ok: "Approve",
-                          submitterParameter: 'APPROVER'
-                        )
+        echo "Attempted approval by: ${approver}"
 
-                        echo "Stage 1: Attempt by: ${approver}"
-                        writeFile file: auditLog, text: "Attempt by: ${approver} at ${new Date()}\n", append: true
-
-                        if (allowed.contains(approver)) {
-                            echo "Stage 1: APPROVED by ${approver}"
-                            writeFile file: auditLog, text: "FINAL APPROVAL by: ${approver} at ${new Date()}\n", append: true
-                            break
-                        } else {
-                            echo "⛔ '${approver}' is NOT allowed. Waiting..."
-                        }
-                    }
-
-                    echo "Audit log saved: ${auditLog}"
-                }
-            }
+        if (allowed.contains(approver)) {
+          echo "Approved by allowed user: ${approver}"
+          break   // exit loop and continue pipeline
+        } else {
+          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          // loop continues → waits again
         }
+      }
+    }
+  }
+}
 
-        /*** 🔥 Stage 2: OPS Team Approval & Logging ***/
-        stage('Approval of operational team before build') {
-            steps {
-                script {
-                    def allowed = ['dhananjay']
-                    def auditLog = "approval_audit_stage2.log"
+        /*** 🔥 Add Manual Approval Here ***/
+stage('Approval of oprational team before build') {
+  steps {
+    script {
+      def allowed = ['dhananjay']
 
-                    writeFile file: auditLog, text: "=== Approval Audit Log: Stage 2 ===\n"
+      while (true) {
+        def approver = input(
+          message: "Approval required to proceed.\nOnly allowed: ${allowed}",
+          ok: "Approve",
+          submitterParameter: 'APPROVER'
+        )
 
-                    while (true) {
-                        def approver = input(
-                          message: "Approval required.\nOnly allowed: ${allowed}",
-                          ok: "Approve",
-                          submitterParameter: 'APPROVER'
-                        )
+        echo "Attempted approval by: ${approver}"
 
-                        echo "Stage 2: Attempt by: ${approver}"
-                        writeFile file: auditLog, text: "Attempt by: ${approver} at ${new Date()}\n", append: true
-
-                        if (allowed.contains(approver)) {
-                            echo "Stage 2: APPROVED by ${approver}"
-                            writeFile file: auditLog, text: "FINAL APPROVAL by: ${approver} at ${new Date()}\n", append: true
-                            break
-                        } else {
-                            echo "⛔ '${approver}' is NOT allowed. Waiting..."
-                        }
-                    }
-
-                    echo "Audit log saved: ${auditLog}"
-                }
-            }
+        if (allowed.contains(approver)) {
+          echo "Approved by allowed user: ${approver}"
+          break   // exit loop and continue pipeline
+        } else {
+          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          // loop continues → waits again
         }
-
+      }
+    }
+  }
+}
         stage('Build App') {
             steps {
                 sh "docker compose build"
