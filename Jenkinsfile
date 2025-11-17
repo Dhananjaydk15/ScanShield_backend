@@ -29,13 +29,17 @@ pipeline {
         }
 
         /*** 🔥 Add Manual Approval Here ***/
-        stage('Approval Before Build') {
-            steps {
-                script {
-                    input message: "Do you want to proceed to Build the App?", ok: "Approve"
-                }
-            }
+stage('Approval Before Build') {
+    steps {
+        script {
+            input(
+                message: "Do you want to proceed to Build the App?",
+                ok: "Approve",
+                submitter: "auditor"       // Only user 'admin' can approve
+            )
         }
+    }
+}
 
         stage('Build App') {
             steps {
