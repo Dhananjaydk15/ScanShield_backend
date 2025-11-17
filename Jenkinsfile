@@ -35,7 +35,7 @@ stage('Approval Before Build') {
             input(
                 message: "Do you want to proceed to Build the App?",
                 ok: "Approve",
-                submitter: "auditor"       // Only user 'admin' can approve
+                submitter: "admin"       // Only user 'admin' can approve
             )
         }
     }
