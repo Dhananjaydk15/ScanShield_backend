@@ -29,20 +29,22 @@ pipeline {
         }
 
         /*** 🔥 Add OWASP Dependency Check Here ***/
-        stage('OWASP Dependency Check') {
-            steps {
-                sh """
-                docker run --rm \
-                  -v \$(pwd):/src \
-                  owasp/dependency-check:latest \
-                  --scan /src \
-                  --format ALL \
-                  --out /src/dependency-check-report \
-                  --project ScanShield
-                """
-            }
-        }
+stage('OWASP Dependency Check') {
+    steps {
+        sh """
+            mkdir -p dependency-check-report
+            chmod -R 777 dependency-check-report
 
+            docker run --rm \
+              -v \$(pwd):/src \
+              owasp/dependency-check:latest \
+              --scan /src \
+              --format ALL \
+              --out /src/dependency-check-report \
+              --project ScanShield
+        """
+    }
+}
         stage('Publish OWASP Reports') {
             steps {
                 publishHTML(target: [
