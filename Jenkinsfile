@@ -55,7 +55,32 @@ stage('Approval Before Build') {
   }
 }
 
+        /*** 🔥 Add Manual Approval Here ***/
+stage('Approval of oprational team before build') {
+  steps {
+    script {
+      def allowed = ['dhananjay']
 
+      while (true) {
+        def approver = input(
+          message: "Approval required to proceed.\nOnly allowed: ${allowed}",
+          ok: "Approve",
+          submitterParameter: 'APPROVER'
+        )
+
+        echo "Attempted approval by: ${approver}"
+
+        if (allowed.contains(approver)) {
+          echo "Approved by allowed user: ${approver}"
+          break   // exit loop and continue pipeline
+        } else {
+          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          // loop continues → waits again
+        }
+      }
+    }
+  }
+}
         stage('Build App') {
             steps {
                 sh "docker compose build"
