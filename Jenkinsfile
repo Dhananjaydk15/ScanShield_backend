@@ -28,7 +28,6 @@ pipeline {
             }
         }
 
-        /*** 🔥 Add Manual Approval Here ***/
 stage('Approval Before Build') {
   steps {
     script {
@@ -47,7 +46,7 @@ stage('Approval Before Build') {
           echo "Approved by allowed user: ${approver}"
           break   // exit loop and continue pipeline
         } else {
-          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          echo " '${approver}' is NOT allowed. Waiting for correct user..."
           // loop continues → waits again
         }
       }
@@ -74,7 +73,7 @@ stage('Approval of oprational team before build') {
           echo "Approved by allowed user: ${approver}"
           break   // exit loop and continue pipeline
         } else {
-          echo "⛔ '${approver}' is NOT allowed. Waiting for correct user..."
+          echo "'${approver}' is NOT allowed. Waiting for correct user..."
           // loop continues → waits again
         }
       }
