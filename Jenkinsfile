@@ -28,33 +28,33 @@ pipeline {
             }
         }
 
-        /*** 🔥 Add OWASP Dependency Check Here ***/
-stage('OWASP Dependency Check') {
-    steps {
-        sh """
-            mkdir -p dependency-check-report
-            chmod -R 777 dependency-check-report
+//         /*** 🔥 Add OWASP Dependency Check Here ***/
+// stage('OWASP Dependency Check') {
+//     steps {
+//         sh """
+//             mkdir -p dependency-check-report
+//             chmod -R 777 dependency-check-report
 
-            docker run --rm \
-              -v \$(pwd):/src \
-              owasp/dependency-check:latest \
-              --scan /src \
-              --format ALL \
-              --out /src/dependency-check-report \
-              --project ScanShield
-        """
-    }
-}
-        stage('Publish OWASP Reports') {
-            steps {
-                publishHTML(target: [
-                    reportDir: 'dependency-check-report',
-                    reportFiles: 'dependency-check-report.html',
-                    reportName: 'OWASP Dependency Check Report'
-                ])
-            }
-        }
-        /*** 🔥 End OWASP Section ***/
+//             docker run --rm \
+//               -v \$(pwd):/src \
+//               owasp/dependency-check:latest \
+//               --scan /src \
+//               --format ALL \
+//               --out /src/dependency-check-report \
+//               --project ScanShield
+//         """
+//     }
+// }
+//         stage('Publish OWASP Reports') {
+//             steps {
+//                 publishHTML(target: [
+//                     reportDir: 'dependency-check-report',
+//                     reportFiles: 'dependency-check-report.html',
+//                     reportName: 'OWASP Dependency Check Report'
+//                 ])
+//             }
+//         }
+//         /*** 🔥 End OWASP Section ***/
 
         stage('Build App') {
             steps {
