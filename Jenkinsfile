@@ -7,6 +7,7 @@ pipeline {
     }
 
     stages {
+
         stage('Clone') {
             steps {
                 git branch: 'main', url: 'https://github.com/Dhananjaydk15/ScanShield_backend.git'
@@ -27,11 +28,31 @@ pipeline {
             }
         }
 
-        // stage('Quality Gate') {
-        //     steps {
-        //         waitForQualityGate abortPipeline: true
-        //     }
-        // }
+        /*** 🔥 Add OWASP Dependency Check Here ***/
+        stage('OWASP Dependency Check') {
+            steps {
+                sh """
+                docker run --rm \
+                  -v \$(pwd):/src \
+                  owasp/dependency-check:latest \
+                  --scan /src \
+                  --format ALL \
+                  --out /src/dependency-check-report \
+                  --project ScanShield
+                """
+            }
+        }
+
+        stage('Publish OWASP Reports') {
+            steps {
+                publishHTML(target: [
+                    reportDir: 'dependency-check-report',
+                    reportFiles: 'dependency-check-report.html',
+                    reportName: 'OWASP Dependency Check Report'
+                ])
+            }
+        }
+        /*** 🔥 End OWASP Section ***/
 
         stage('Build App') {
             steps {
@@ -48,9 +69,10 @@ pipeline {
             }
         }
     }
-        post {
+
+    post {
         success {
-            emailext (
+            emailext(
                 to: 'dhananjaykhairnar15@gmail.com',
                 subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
                 body: """<p>Hi Team,</p>
