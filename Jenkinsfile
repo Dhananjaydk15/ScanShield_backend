@@ -30,16 +30,26 @@ pipeline {
 
         /*** 🔥 Add Manual Approval Here ***/
 stage('Approval Before Build') {
-    steps {
-        script {
-            input(
-                message: "Do you want to proceed to Build the App?",
-                ok: "Approve",
-                submitter: "auditor"       // Only user 'admin' can approve
-            )
-        }
+  steps {
+    script {
+      def result = input(
+        message: "Do you want to proceed to Build the App?",
+        ok: "Approve",
+        submitterParameter: 'APPROVER'   // will contain who approved
+      )
+      // Jenkins stores the returned variable in the binding; fetch it:
+      def approver = env.APPROVER ?: result   // depending on version, result or env var populated
+      echo "Approved by: ${approver}"
+
+      // Allowed list
+      def allowed = ['admin', 'auditor']
+      if (!allowed.contains(approver)) {
+        error("Unauthorized approver: ${approver}. Only ${allowed} can approve.")
+      }
     }
+  }
 }
+
 
         stage('Build App') {
             steps {
