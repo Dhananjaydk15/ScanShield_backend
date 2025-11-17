@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER = 'sonarqube'
-        SONAR_TOKEN = 'squ_e68fe8e90af5b9a142b05bc33e321ec6fea2aa7b'
+        SONAR_TOKEN = 'squ_96754e8f46fcf62b692605612352ed6ca4e8bfb0'
     }
 
     stages {
