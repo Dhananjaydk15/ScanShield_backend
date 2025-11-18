@@ -90,7 +90,7 @@ pipeline {
                 trivy fs . --scanners vuln \
                     --db-repository public.ecr.aws/aquasecurity/trivy-db \
                     --format template \
-                    --template "/var/lib/jenkins/workspace/trivy-report.tpl" \
+                    --template "@/var/lib/jenkins/workspace/trivy-report.tpl" \
                     -o trivy-report.html
                 """
             }
