@@ -139,6 +139,7 @@ cat << 'EOF' > trivy-report.tpl
 </html>
 EOF
 
+cat trivy-report.tpl
 echo "Running Trivy Scan..."
 
 trivy fs . --scanners vuln \
