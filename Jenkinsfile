@@ -86,30 +86,32 @@ pipeline {
 stage('Trivy Vulnerability Scan') {
     steps {
         sh """
-        echo "Creating Trivy Template..."
+        echo "Creating Correct Trivy Template..."
 
-        cat << 'EOF' > trivy-report.tpl
+cat << 'EOF' > trivy-report.tpl
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Trivy Vulnerability Report</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #333; color: white; }
-    </style>
+<meta charset="UTF-8">
+<title>Trivy Vulnerability Report</title>
+<style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #333; color: white; }
+</style>
 </head>
+
 <body>
+<h1>Trivy Vulnerability Report</h1>
 
-<h2>Trivy Vulnerability Report</h2>
+{{- range .Results }}
+<h2>Target: {{ .Target }}</h2>
 
-{{- range . }}
-<h3>Target: {{ .Target }}</h3>
-
+{{- if .Vulnerabilities }}
 <table>
     <tr>
         <th>Package</th>
-        <th>Installed Version</th>
+        <th>Installed</th>
         <th>Vulnerability</th>
         <th>Severity</th>
         <th>Fixed Version</th>
@@ -126,8 +128,10 @@ stage('Trivy Vulnerability Scan') {
         <td>{{ .Description }}</td>
     </tr>
     {{- end }}
-
 </table>
+{{- else }}
+<p>No vulnerabilities found.</p>
+{{- end }}
 
 {{- end }}
 
@@ -135,14 +139,15 @@ stage('Trivy Vulnerability Scan') {
 </html>
 EOF
 
-        echo "Running Trivy Scan..."
-        trivy fs . --scanners vuln \
-            --db-repository public.ecr.aws/aquasecurity/trivy-db \
-            --format template \
-            --template trivy-report.tpl \
-            -o trivy-report.html
+echo "Running Trivy Scan..."
 
-        echo "Trivy Scan Completed."
+trivy fs . --scanners vuln \
+    --db-repository public.ecr.aws/aquasecurity/trivy-db \
+    --format template \
+    --template trivy-report.tpl \
+    -o trivy-report.html
+
+echo "Trivy Scan Completed."
         """
     }
 }
