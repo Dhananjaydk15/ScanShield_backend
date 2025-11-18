@@ -104,7 +104,7 @@ cat << 'EOF' > trivy-report.tpl
 <body>
 <h1>Trivy Vulnerability Report</h1>
 
-{{- range .Results }}
+{{- range . }}
 <h2>Target: {{ .Target }}</h2>
 
 {{- if .Vulnerabilities }}
