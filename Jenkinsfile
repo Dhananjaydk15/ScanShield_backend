@@ -30,47 +30,47 @@ pipeline {
             }
         }
 
-        /* ===== FIRST APPROVAL ===== */
-        stage('Approval Before Build') {
-            steps {
-                script {
-                    def allowed = ['admin', 'auditor']
-                    while (true) {
-                        def approver = input(
-                            message: "Approval required. Allowed only: ${allowed}",
-                            ok: "Approve",
-                            submitterParameter: 'APPROVER'
-                        )
-                        if (allowed.contains(approver)) {
-                            echo "Approved by: ${approver}"
-                            break
-                        }
-                        echo "'${approver}' is NOT allowed!"
-                    }
-                }
-            }
-        }
+        // /* ===== FIRST APPROVAL ===== */
+        // stage('Approval Before Build') {
+        //     steps {
+        //         script {
+        //             def allowed = ['admin', 'auditor']
+        //             while (true) {
+        //                 def approver = input(
+        //                     message: "Approval required. Allowed only: ${allowed}",
+        //                     ok: "Approve",
+        //                     submitterParameter: 'APPROVER'
+        //                 )
+        //                 if (allowed.contains(approver)) {
+        //                     echo "Approved by: ${approver}"
+        //                     break
+        //                 }
+        //                 echo "'${approver}' is NOT allowed!"
+        //             }
+        //         }
+        //     }
+        // }
 
-        /* ===== SECOND APPROVAL ===== */
-        stage('Operational Team Approval') {
-            steps {
-                script {
-                    def allowed = ['dhananjay']
-                    while (true) {
-                        def approver = input(
-                            message: "Approval required. Allowed only: ${allowed}",
-                            ok: "Approve",
-                            submitterParameter: 'APPROVER'
-                        )
-                        if (allowed.contains(approver)) {
-                            echo "Approved by: ${approver}"
-                            break
-                        }
-                        echo "'${approver}' is NOT allowed!"
-                    }
-                }
-            }
-        }
+        // /* ===== SECOND APPROVAL ===== */
+        // stage('Operational Team Approval') {
+        //     steps {
+        //         script {
+        //             def allowed = ['dhananjay']
+        //             while (true) {
+        //                 def approver = input(
+        //                     message: "Approval required. Allowed only: ${allowed}",
+        //                     ok: "Approve",
+        //                     submitterParameter: 'APPROVER'
+        //                 )
+        //                 if (allowed.contains(approver)) {
+        //                     echo "Approved by: ${approver}"
+        //                     break
+        //                 }
+        //                 echo "'${approver}' is NOT allowed!"
+        //             }
+        //         }
+        //     }
+        // }
 
         /* ===== SYFT SCAN ===== */
         stage('Syft SBOM Scan') {
