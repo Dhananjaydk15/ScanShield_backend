@@ -84,19 +84,23 @@ pipeline {
         }
 
         /* ====== TRIVY VULNERABILITY SCAN ====== */
-stage('Trivy Vulnerability Scan (Table)') {
+stage('Trivy Vulnerability Scan (DOCX)') {
     steps {
         sh """
         export TRIVY_TIMEOUT=5m
 
-        # Run Trivy filesystem scan and save report in TABLE format
+        # 1️⃣ Generate report in Markdown (best for conversion)
         trivy fs . --scanners vuln \
             --db-repository public.ecr.aws/aquasecurity/trivy-db \
-            -f table \
-            -o trivy-vulnerability-report.txt
+            -f markdown \
+            -o trivy-report.md
+
+        # 2️⃣ Convert Markdown → DOCX using pandoc
+        pandoc trivy-report.md -o trivy-report.docx
         """
     }
 }
+
 
         /* ====== BUILD ====== */
         stage('Build App') {
@@ -119,7 +123,8 @@ stage('Trivy Vulnerability Scan (Table)') {
     /* ====== ARCHIVE REPORTS IN JENKINS UI ====== */
     post {
         always {
-            archiveArtifacts artifacts: '*.json, *.txt', fingerprint: true
+            archiveArtifacts artifacts: '*.json, *.txt, trivy-report.docx', fingerprint: true
+
         }
 
         success {
