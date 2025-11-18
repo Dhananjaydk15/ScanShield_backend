@@ -114,15 +114,18 @@ pipeline {
         }
 
         /* ===== PUBLISH HTML REPORT ===== */
-        stage('Publish Vulnerability Report') {
-            steps {
-                publishHTML([
-                    reportDir: '.',
-                    reportFiles: 'trivy-report.html',
-                    reportName: 'Trivy Vulnerability Report'
-                ])
-            }
-        }
+stage('Publish Vulnerability Report') {
+    steps {
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'trivy-report.html',
+            reportName: 'Trivy Vulnerability Report',
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: false
+        ])
+    }
+}
     }
 
     /* ===== POST ACTIONS ===== */
