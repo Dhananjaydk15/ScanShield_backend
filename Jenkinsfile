@@ -104,7 +104,7 @@ cat << 'EOF' > trivy-report.tpl
 <body>
 <h1>Trivy Vulnerability Report</h1>
 
-{{- range . }}
+{{- range .Results }}
 <h2>Target: {{ .Target }}</h2>
 
 {{- if .Vulnerabilities }}
@@ -139,7 +139,6 @@ cat << 'EOF' > trivy-report.tpl
 </html>
 EOF
 
-cat trivy-report.tpl
 echo "Running Trivy Scan..."
 
 trivy fs . --scanners vuln \
