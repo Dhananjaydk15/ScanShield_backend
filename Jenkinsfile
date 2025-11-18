@@ -83,18 +83,69 @@ pipeline {
         }
 
         /* ===== TRIVY SCAN (HTML already exists) ===== */
-        stage('Trivy Vulnerability Scan') {
-            steps {
-                sh """
-                export TRIVY_TIMEOUT=5m
-                trivy fs . --scanners vuln \
-                    --db-repository public.ecr.aws/aquasecurity/trivy-db \
-                    --format template \
-                    --template /var/lib/jenkins/workspace/trivy-report.tpl \
-                    -o trivy-report.html
-                """
-            }
-        }
+stage('Trivy Vulnerability Scan') {
+    steps {
+        sh """
+        echo "Creating Trivy Template..."
+
+        cat << 'EOF' > trivy-report.tpl
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trivy Vulnerability Report</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #333; color: white; }
+    </style>
+</head>
+<body>
+
+<h2>Trivy Vulnerability Report</h2>
+
+{{- range . }}
+<h3>Target: {{ .Target }}</h3>
+
+<table>
+    <tr>
+        <th>Package</th>
+        <th>Installed Version</th>
+        <th>Vulnerability</th>
+        <th>Severity</th>
+        <th>Fixed Version</th>
+        <th>Description</th>
+    </tr>
+
+    {{- range .Vulnerabilities }}
+    <tr>
+        <td>{{ .PkgName }}</td>
+        <td>{{ .InstalledVersion }}</td>
+        <td>{{ .VulnerabilityID }}</td>
+        <td>{{ .Severity }}</td>
+        <td>{{ .FixedVersion }}</td>
+        <td>{{ .Description }}</td>
+    </tr>
+    {{- end }}
+
+</table>
+
+{{- end }}
+
+</body>
+</html>
+EOF
+
+        echo "Running Trivy Scan..."
+        trivy fs . --scanners vuln \
+            --db-repository public.ecr.aws/aquasecurity/trivy-db \
+            --format template \
+            --template trivy-report.tpl \
+            -o trivy-report.html
+
+        echo "Trivy Scan Completed."
+        """
+    }
+}
 
         /* ===== BUILD ===== */
         stage('Build App') {
