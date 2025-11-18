@@ -84,18 +84,16 @@ pipeline {
         }
 
         /* ====== TRIVY VULNERABILITY SCAN ====== */
-stage('Trivy FS Scan') {
+stage('Trivy Vulnerability Scan (Table)') {
     steps {
         sh """
         export TRIVY_TIMEOUT=5m
 
+        # Run Trivy filesystem scan and save report in TABLE format
         trivy fs . --scanners vuln \
             --db-repository public.ecr.aws/aquasecurity/trivy-db \
-            -f json -o trivy-report.json
-
-        trivy fs . --scanners vuln \
-            --db-repository public.ecr.aws/aquasecurity/trivy-db \
-            -f table -o trivy-report.txt
+            -f table \
+            -o trivy-vulnerability-report.txt
         """
     }
 }
