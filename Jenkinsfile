@@ -43,7 +43,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
                     sh """
-                    sonar-scanner \
+                    /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000 \
