@@ -150,7 +150,7 @@ pipeline {
                     reportName: 'ZAP DAST Report',
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    alwaysLinkToLastBuild : true
+                    alwaysLinkToLastBuild : true,
                     allowMissing: true,
                 ])
 
