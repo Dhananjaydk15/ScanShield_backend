@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER = 'sonarqube'
-        SONAR_TOKEN = credentials('sonar-token')  
+        SONAR_TOKEN = 'squ_96754e8f46fcf62b692605612352ed6ca4e8bfb0' 
         TRIVY_TIMEOUT = '5m'
         APP_URL = 'http://localhost:8000'
         ZAP_REPORT_DIR = 'zap-reports'
