@@ -137,22 +137,29 @@ echo "Trivy Scan Completed."
         }
 
         /* ===== OWASP ZAP DAST (Baseline) ===== */
+
 stage('OWASP ZAP DAST Scan') {
     steps {
         sh """
         echo "Starting OWASP ZAP Baseline Scan..."
 
+        # Run OWASP ZAP Baseline Scan
         docker run --rm --network host \
             -v \$(pwd):/zap/wrk \
-            -t zaproxy/zaproxy zap-baseline.py \
-            -t ${APP_URL} \
+            ghcr.io/zaproxy/zaproxy \
+            zap-baseline.py \
+            -t http://localhost:8000 \
             -r zap-report.html \
             -x zap-report.xml \
             -J zap-json-report.json \
             -I || true
+
+        echo "ZAP Baseline Scan Completed. Reports generated:"
+        ls -l zap-report.html zap-report.xml zap-json-report.json || true
         """
     }
 }
+
 
         /* ===== Publish ZAP Report ===== */
         stage('Publish ZAP Report') {
