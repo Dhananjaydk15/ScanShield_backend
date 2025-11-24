@@ -3,27 +3,47 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER = 'sonarqube'
-        SONAR_TOKEN = 'squ_96754e8f46fcf62b692605612352ed6ca4e8bfb0' 
-        TRIVY_TIMEOUT = '5m'
+        SONAR_TOKEN = 'squ_96754e8f46fcf62b692605612352ed6ca4e8bfb0'
+
         APP_URL = 'http://localhost:8000'
+        IMAGE_NAME = 'scanshield-app:latest'
         ZAP_REPORT_DIR = 'zap-reports'
     }
 
     stages {
 
-        /* ================== CLONE ================== */
-        stage('Clone') {
+        /* ================== 1. CLONE ================== */
+        stage('Clone Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Dhananjaydk15/ScanShield_backend.git'
             }
         }
 
-        /* ================== SAST (SonarQube) ================== */
-        stage('SonarQube Analysis') {
+        /* ================== 2. CODE LINTING ================== */
+        stage('Code Linting') {
+            steps {
+                sh """
+                pip install flake8 || true
+                flake8 . --output-file=flake8-report.txt || true
+                """
+            }
+        }
+
+        /* ================== 3. SECRETS SCAN ================== */
+        stage('Secrets Scan (Gitleaks)') {
+            steps {
+                sh """
+                gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+                """
+            }
+        }
+
+        /* ================== 4. SAST (SonarQube) ================== */
+        stage('SAST - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
                     sh """
-                    /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
+                    sonar-scanner \
                         -Dsonar.projectKey=ScanShield \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000 \
@@ -33,200 +53,141 @@ pipeline {
             }
         }
 
-        /* ================== SBOM (SYFT) ================== */
-        stage('Syft SBOM Scan') {
+        /* ================== 5. SBOM ================== */
+        stage('Generate SBOM (Syft)') {
             steps {
                 sh """
-                syft . -o json > syft-report.json || true
-                syft . -o table > syft-report.txt || true
+                syft . -o json > sbom.json || true
                 """
             }
         }
 
-        /* ================== SCA (TRIVY) ================== */
-        stage('Trivy Vulnerability Scan') {
+        /* ================== 6. SCA (Trivy FS) ================== */
+        stage('SCA - Trivy FS Scan') {
             steps {
                 sh """
-                echo "Creating Trivy HTML Template..."
-
-cat << 'EOF' > trivy-report.tpl
-<!DOCTYPE html>
-<html>
-<head>
-<title>Trivy Vulnerability Report</title>
-<style>
-table {border-collapse:collapse;width:100%;}
-th,td {border:1px solid #ddd;padding:8px;}
-th {background:#333;color:white;}
-</style>
-</head>
-<body>
-<h1>Trivy Vulnerability Report</h1>
-{{- range .Results }}
-<h2>Target: {{ .Target }}</h2>
-{{- if .Vulnerabilities }}
-<table>
-<tr>
-<th>Package</th><th>Installed</th><th>Vulnerability</th><th>Severity</th><th>Fixed</th><th>Description</th>
-</tr>
-{{- range .Vulnerabilities }}
-<tr>
-<td>{{ .PkgName }}</td>
-<td>{{ .InstalledVersion }}</td>
-<td>{{ .VulnerabilityID }}</td>
-<td>{{ .Severity }}</td>
-<td>{{ .FixedVersion }}</td>
-<td>{{ .Description }}</td>
-</tr>
-{{- end }}
-</table>
-{{ else }}<p>No vulnerabilities found.</p>{{ end }}
-{{- end }}
-</body>
-</html>
-EOF
-
-                trivy fs . --scanners vuln \
-                    --format template \
-                    --template trivy-report.tpl \
-                    -o trivy-report.html || true
+                trivy fs . -o trivy-fs-report.json --format json || true
                 """
             }
         }
 
-        /* ================== BUILD ================== */
+        /* ================== 7. SECURITY GATE #1 ================== */
+        stage('Security Gate #1 (SAST + SCA)') {
+            steps {
+                script {
+                    def highIssues = sh(script: "grep -ic 'HIGH' trivy-fs-report.json || true", returnStdout: true).trim()
+                    if (highIssues.toInteger() > 0) {
+                        error("Security Gate #1 FAILED: Trivy FS found high vulnerabilities.")
+                    }
+                }
+            }
+        }
+
+        /* ================== 8. BUILD ================== */
         stage('Build App') {
             steps {
-                sh "docker compose build"
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
-        /* ================== DEPLOY ================== */
-        stage('Deploy App') {
+        /* ================== 9. IMAGE SCAN ================== */
+        stage('Trivy Image Scan') {
             steps {
                 sh """
-                docker compose down || true
-                docker compose up -d --force-recreate
+                trivy image ${IMAGE_NAME} --format json -o trivy-image-report.json || true
                 """
             }
         }
 
-        /* ================== PUBLISH TRIVY REPORT ================== */
-        stage('Publish Trivy Report') {
+        /* ================== 10. SECURITY GATE #2 ================== */
+        stage('Security Gate #2 (Image Scan)') {
             steps {
-                publishHTML([
-                    reportDir: '.',
-                    reportFiles: 'trivy-report.html',
-                    reportName: 'Trivy Vulnerability Report',
-                    keepAll: true,
-                    alwaysLinkToLastBuild: true,
-                    allowMissing: true
-                ])
+                script {
+                    def critical = sh(script: "grep -ic 'CRITICAL' trivy-image-report.json || true", returnStdout: true).trim()
+                    if (critical.toInteger() > 0) {
+                        error("Security Gate #2 FAILED: Trivy Image Scan found CRITICAL vulnerabilities.")
+                    }
+                }
             }
         }
 
-        /* ================== ZAP DAST (Baseline Scan) ================== */
-        stage('OWASP ZAP DAST Scan') {
+        /* ================== 11. DEPLOY ================== */
+        stage('Deploy Application') {
             steps {
                 sh """
-                echo "Preparing ZAP writable directory..."
+                docker stop scanshield || true
+                docker rm scanshield || true
+                docker run -d --name scanshield -p 8000:8000 ${IMAGE_NAME}
+                """
+            }
+        }
+
+        /* ================== 12. DAST (OWASP ZAP) ================== */
+        stage('DAST - OWASP ZAP Scan') {
+            steps {
+                sh """
                 mkdir -p ${ZAP_REPORT_DIR}
                 chmod 777 ${ZAP_REPORT_DIR}
-
-                echo "Running OWASP ZAP Baseline Scan..."
 
                 docker run --rm --network host \
                     -v \$(pwd)/${ZAP_REPORT_DIR}:/zap/wrk \
                     ghcr.io/zaproxy/zaproxy \
-                    zap-baseline.py \
-                    -t ${APP_URL} \
+                    zap-baseline.py -t ${APP_URL} \
                     -r zap-report.html \
                     -x zap-report.xml \
-                    -J zap-json-report.json \
+                    -J zap-report.json \
                     -I || true
-
-                echo "ZAP Scan completed. Files:"
-                ls -l ${ZAP_REPORT_DIR}
                 """
             }
         }
 
-        /* ================== PUBLISH ZAP REPORTS ================== */
-        stage('Publish ZAP Reports') {
+        /* ================== 13. PUBLISH REPORTS ================== */
+        stage('Publish Reports') {
             steps {
                 publishHTML([
                     reportDir: "${ZAP_REPORT_DIR}",
                     reportFiles: 'zap-report.html',
-                    reportName: 'OWASP ZAP DAST Report',
-                    keepAll: true,
+                    reportName: 'ZAP DAST Report',
                     alwaysLinkToLastBuild: true,
+                    keepAll: true,
                     allowMissing: true
                 ])
 
                 publishHTML([
-                    reportDir: "${ZAP_REPORT_DIR}",
-                    reportFiles: 'zap-report.xml',
-                    reportName: 'OWASP ZAP XML Report',
-                    keepAll: true,
-                    alwaysLinkToLastBuild: true,
+                    reportDir: ".",
+                    reportFiles: 'trivy-fs-report.json',
+                    reportName: 'Trivy FS JSON',
                     allowMissing: true
                 ])
             }
         }
 
-        /* ================== SECURITY GATE ================== */
-        stage('ZAP Security Gate') {
-            steps {
-                sh """
-                echo "Checking ZAP report for HIGH/CRITICAL alerts..."
+    }
 
-                if [ ! -f ${ZAP_REPORT_DIR}/zap-json-report.json ]; then
-                    echo "No ZAP JSON report found. Skipping gate."
-                    exit 0
-                fi
-
-python3 - << 'PY'
-import json, sys
-data = json.load(open("${ZAP_REPORT_DIR}/zap-json-report.json"))
-count = 0
-
-for site in data.get("site", []):
-    for a in site.get("alerts", []):
-        if a.get("risk", "").lower() in ("high", "critical"):
-            count += 1
-
-print("High/Critical findings:", count)
-sys.exit(2 if count > 0 else 0)
-PY
-                """
+    /* ================== 14. POST BUILD ================== */
+    post {
+        always {
+            script {
+                archiveArtifacts artifacts: '**/*.json, **/*.xml, **/*.txt, **/*.html', fingerprint: true
             }
         }
-    }
 
-    /* ================== POST BUILD ================== */
-post {
-    always {
-        script {
-            archiveArtifacts artifacts: '**/*.json, **/*.txt, **/*.html, **/*.xml', fingerprint: true
+        success {
+            emailext(
+                to: "dhananjaykhairnar15@gmail.com",
+                subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
+                body: "<p>Build Completed Successfully with full DevSecOps pipeline.</p>",
+                mimeType: 'text/html'
+            )
+        }
+
+        failure {
+            emailext(
+                to: "dhananjaykhairnar15@gmail.com",
+                subject: "FAILED: Build #${env.BUILD_NUMBER}",
+                body: "<p>Build Failed. Check Reports.</p>",
+                mimeType: 'text/html'
+            )
         }
     }
-
-    success {
-        emailext(
-            to: 'dhananjaykhairnar15@gmail.com',
-            subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
-            body: "<p>Build succeeded. Reports generated (Trivy + ZAP + Syft + Sonar).</p>",
-            mimeType: 'text/html'
-        )
-    }
-
-    failure {
-        emailext(
-            to: 'dhananjaykhairnar15@gmail.com',
-            subject: "FAILED: Build #${env.BUILD_NUMBER}",
-            body: "<p>Build failed. Check generated reports.</p>",
-            mimeType: 'text/html'
-        )
-    }
-}
 }
