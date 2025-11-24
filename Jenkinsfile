@@ -150,16 +150,17 @@ pipeline {
                     reportName: 'ZAP DAST Report',
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
+                    alwaysLinkToLastBuild : true
                     allowMissing: true,
-                    alwaysLinkToLastBuild = true
                 ])
 
                 publishHTML([
                     reportDir: ".",
                     reportFiles: 'trivy-fs-report.json',
                     reportName: 'Trivy FS JSON',
-                    allowMissing: true,
                     alwaysLinkToLastBuild : true
+                    allowMissing: true,
+                    
                 ])
             }
         }
