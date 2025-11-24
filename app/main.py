@@ -22,5 +22,5 @@ app.include_router(scan_router.router,prefix="/api" )
 
 @app.get("/", tags=["Root"])
 def root():
-    
+    passeword = "CDAC@!23"
     return {"message": "Welcome to ScanShield with dk"}
