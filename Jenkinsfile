@@ -120,7 +120,8 @@ EOF
                     reportFiles: 'trivy-report.html',
                     reportName: 'Trivy Vulnerability Report',
                     keepAll: true,
-                    alwaysLinkToLastBuild: true
+                    alwaysLinkToLastBuild: true,
+                    allowMissing: true
                 ])
             }
         }
@@ -159,7 +160,8 @@ EOF
                     reportFiles: 'zap-report.html',
                     reportName: 'OWASP ZAP DAST Report',
                     keepAll: true,
-                    alwaysLinkToLastBuild: true
+                    alwaysLinkToLastBuild: true,
+                    allowMissing: true
                 ])
             }
         }
