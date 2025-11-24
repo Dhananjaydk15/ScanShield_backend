@@ -137,24 +137,23 @@ echo "Trivy Scan Completed."
         }
 
         /* ===== OWASP ZAP DAST (Baseline) ===== */
-        stage('OWASP ZAP DAST Scan') {
-            steps {
-                sh """
-                echo "Starting OWASP ZAP Baseline Scan..."
+stage('OWASP ZAP DAST Scan') {
+    steps {
+        sh """
+        echo "Starting OWASP ZAP Baseline Scan..."
 
-                # NOTE: --network host used so ZAP can reach localhost services from container.
-                # Remove --network host if not supported on your agent and use a proper docker network.
-                docker run --rm --network host \
-                    -v $(pwd):/zap/wrk \
-                    -t owasp/zap2docker-stable zap-baseline.py \
-                    -t ${APP_URL} \
-                    -r zap-report.html \
-                    -x zap-report.xml \
-                    -J zap-json-report.json \
-                    -I || true
-                """
-            }
-        }
+        docker run --rm --network host \
+            -v \$(pwd):/zap/wrk \
+            -t owasp/zap2docker-stable zap-baseline.py \
+            -t ${APP_URL} \
+            -r zap-report.html \
+            -x zap-report.xml \
+            -J zap-json-report.json \
+            -I || true
+        """
+    }
+}
+
 
         /* ===== Publish ZAP Report ===== */
         stage('Publish ZAP Report') {
