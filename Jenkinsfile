@@ -182,6 +182,24 @@ stage('Publish Vulnerability Report') {
         ])
     }
 }
+
+stage('OWASP ZAP DAST Scan') {
+    steps {
+        sh """
+        echo "Starting OWASP ZAP Baseline Scan..."
+
+        docker run --rm \
+            -v $(pwd):/zap/wrk \
+            -t owasp/zap2docker-stable zap-baseline.py \
+            -t http://localhost:8000 \
+            -r zap-report.html \
+            -x zap-report.xml \
+            -J zap-json-report.json \
+            -I
+        """
+    }
+}
+
     }
 
     /* ===== POST ACTIONS ===== */
