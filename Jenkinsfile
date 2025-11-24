@@ -155,7 +155,7 @@ stage('OWASP ZAP DAST Scan') {
             -x zap-report.xml \
             -J zap-json-report.json \
             -I || true
-    
+        
 
         echo "ZAP Baseline Scan Completed. Reports generated:"
         ls -l zap-report.html zap-report.xml zap-json-report.json || true
