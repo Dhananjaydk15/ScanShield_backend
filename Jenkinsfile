@@ -204,29 +204,29 @@ PY
     }
 
     /* ================== POST BUILD ================== */
-    post {
+post {
     always {
         script {
             archiveArtifacts artifacts: '**/*.json, **/*.txt, **/*.html, **/*.xml', fingerprint: true
         }
     }
 
-        success {
-            emailext(
-                to: 'dhananjaykhairnar15@gmail.com',
-                subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
-                body: "<p>Build succeeded. Reports generated (Trivy + ZAP + Syft + Sonar).</p>",
-                mimeType: 'text/html'
-            )
-        }
-
-        failure {
-            emailext(
-                to: 'dhananjaykhairnar15@gmail.com',
-                subject: "FAILED: Build #${env.BUILD_NUMBER}",
-                body: "<p>Build failed. Check generated reports.</p>",
-                mimeType: 'text/html'
-            )
-        }
+    success {
+        emailext(
+            to: 'dhananjaykhairnar15@gmail.com',
+            subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
+            body: "<p>Build succeeded. Reports generated (Trivy + ZAP + Syft + Sonar).</p>",
+            mimeType: 'text/html'
+        )
     }
+
+    failure {
+        emailext(
+            to: 'dhananjaykhairnar15@gmail.com',
+            subject: "FAILED: Build #${env.BUILD_NUMBER}",
+            body: "<p>Build failed. Check generated reports.</p>",
+            mimeType: 'text/html'
+        )
+    }
+}
 }
