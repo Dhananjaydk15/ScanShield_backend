@@ -122,8 +122,19 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 sh """
-                docker stop scanshield || true
-                docker rm scanshield || true
+                echo "Stopping any container already using port 8000..."
+        
+                PORT=8000
+                CID=\$(docker ps -q --filter "publish=\${PORT}")
+        
+                if [ ! -z "\$CID" ]; then
+                    echo "Port \$PORT is busy. Stopping container \$CID"
+                    docker stop \$CID || true
+                    docker rm \$CID || true
+                fi
+        
+                echo "Deploying new container..."
+                docker rm -f scanshield || true
                 docker run -d --name scanshield -p 8000:8000 ${IMAGE_NAME}
                 """
             }
