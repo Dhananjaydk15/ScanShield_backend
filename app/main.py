@@ -22,4 +22,4 @@ app.include_router(scan_router.router,prefix="/api" )
 
 @app.get("/", tags=["Root"])
 def root():
-    return {"message": "Welcome to ScanShield test 1"}
+    return {"message": "Welcome to ScanShield"}
