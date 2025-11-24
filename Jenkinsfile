@@ -121,7 +121,7 @@ EOF
                     reportName: 'Trivy Vulnerability Report',
                     keepAll: true,
                     alwaysLinkToLastBuild: true,
-                    allowMissing: true
+                    
                 ])
             }
         }
