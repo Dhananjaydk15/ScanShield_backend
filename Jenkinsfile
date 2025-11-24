@@ -209,6 +209,7 @@ PY
         script {
             archiveArtifacts artifacts: '**/*.json, **/*.txt, **/*.html, **/*.xml', fingerprint: true
         }
+    }
 
         success {
             emailext(
