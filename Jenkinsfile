@@ -144,7 +144,7 @@ stage('OWASP ZAP DAST Scan') {
 
         docker run --rm --network host \
             -v \$(pwd):/zap/wrk \
-            -t owasp/zap2docker-stable zap-baseline.py \
+            -t zaproxy/zaproxy zap-baseline.py \
             -t ${APP_URL} \
             -r zap-report.html \
             -x zap-report.xml \
@@ -153,7 +153,6 @@ stage('OWASP ZAP DAST Scan') {
         """
     }
 }
-
 
         /* ===== Publish ZAP Report ===== */
         stage('Publish ZAP Report') {
