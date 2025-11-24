@@ -205,8 +205,9 @@ PY
 
     /* ================== POST BUILD ================== */
     post {
-        always {
-            archiveArtifacts artifacts: '**/*.html, **/*.xml, **/*.json, **/*.txt', fingerprint: true
+    always {
+        script {
+            archiveArtifacts artifacts: '**/*.json, **/*.txt, **/*.html, **/*.xml', fingerprint: true
         }
 
         success {
