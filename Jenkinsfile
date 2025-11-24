@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER = 'sonarqube'
-        SONAR_TOKEN = credentials('sonar-token')   // ✔ Secure token storage
+        SONAR_TOKEN = credentials('sonar-token')  
         TRIVY_TIMEOUT = '5m'
         APP_URL = 'http://localhost:8000'
         ZAP_REPORT_DIR = 'zap-reports'
@@ -18,7 +18,7 @@ pipeline {
             }
         }
 
-        /* ================== SAST (SONAR) ================== */
+        /* ================== SAST (SonarQube) ================== */
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
@@ -43,7 +43,7 @@ pipeline {
             }
         }
 
-        /* ================== SCA (TRIVY FS) ================== */
+        /* ================== SCA (TRIVY) ================== */
         stage('Trivy Vulnerability Scan') {
             steps {
                 sh """
@@ -80,13 +80,12 @@ th {background:#333;color:white;}
 </tr>
 {{- end }}
 </table>
-{{ else }}<p>No vulnerabilities.</p>{{ end }}
+{{ else }}<p>No vulnerabilities found.</p>{{ end }}
 {{- end }}
 </body>
 </html>
 EOF
 
-                echo "Running Trivy Scan..."
                 trivy fs . --scanners vuln \
                     --format template \
                     --template trivy-report.tpl \
@@ -121,12 +120,12 @@ EOF
                     reportName: 'Trivy Vulnerability Report',
                     keepAll: true,
                     alwaysLinkToLastBuild: true,
-                    
+                    allowMissing: true
                 ])
             }
         }
 
-        /* ================== DAST (OWASP ZAP) ================== */
+        /* ================== ZAP DAST (Baseline Scan) ================== */
         stage('OWASP ZAP DAST Scan') {
             steps {
                 sh """
@@ -146,7 +145,7 @@ EOF
                     -J zap-json-report.json \
                     -I || true
 
-                echo "ZAP Scan Completed. Files:"
+                echo "ZAP Scan completed. Files:"
                 ls -l ${ZAP_REPORT_DIR}
                 """
             }
@@ -163,6 +162,15 @@ EOF
                     alwaysLinkToLastBuild: true,
                     allowMissing: true
                 ])
+
+                publishHTML([
+                    reportDir: "${ZAP_REPORT_DIR}",
+                    reportFiles: 'zap-report.xml',
+                    reportName: 'OWASP ZAP XML Report',
+                    keepAll: true,
+                    alwaysLinkToLastBuild: true,
+                    allowMissing: true
+                ])
             }
         }
 
@@ -173,20 +181,18 @@ EOF
                 echo "Checking ZAP report for HIGH/CRITICAL alerts..."
 
                 if [ ! -f ${ZAP_REPORT_DIR}/zap-json-report.json ]; then
-                  echo "No ZAP JSON report found. Skipping security gate."
-                  exit 0
+                    echo "No ZAP JSON report found. Skipping gate."
+                    exit 0
                 fi
 
-                python3 - <<'PY'
+python3 - << 'PY'
 import json, sys
-path = "${ZAP_REPORT_DIR}/zap-json-report.json"
-data = json.load(open(path))
+data = json.load(open("${ZAP_REPORT_DIR}/zap-json-report.json"))
 count = 0
 
 for site in data.get("site", []):
     for a in site.get("alerts", []):
-        risk = a.get("risk", "").lower()
-        if risk in ["high", "critical"]:
+        if a.get("risk", "").lower() in ("high", "critical"):
             count += 1
 
 print("High/Critical findings:", count)
@@ -200,14 +206,14 @@ PY
     /* ================== POST BUILD ================== */
     post {
         always {
-            archiveArtifacts artifacts: '**/*.json, **/*.txt, **/*.html, **/*.xml', fingerprint: true
+            archiveArtifacts artifacts: '**/*.html, **/*.xml, **/*.json, **/*.txt', fingerprint: true
         }
 
         success {
             emailext(
                 to: 'dhananjaykhairnar15@gmail.com',
                 subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
-                body: "<p>Build succeeded. Reports generated (Trivy + ZAP).</p>",
+                body: "<p>Build succeeded. Reports generated (Trivy + ZAP + Syft + Sonar).</p>",
                 mimeType: 'text/html'
             )
         }
@@ -216,7 +222,7 @@ PY
             emailext(
                 to: 'dhananjaykhairnar15@gmail.com',
                 subject: "FAILED: Build #${env.BUILD_NUMBER}",
-                body: "<p>Build failed. Check reports for details.</p>",
+                body: "<p>Build failed. Check generated reports.</p>",
                 mimeType: 'text/html'
             )
         }
