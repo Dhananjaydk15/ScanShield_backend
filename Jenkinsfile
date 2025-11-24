@@ -76,11 +76,13 @@ pipeline {
             steps {
                 script {
                     def highIssues = sh(script: "grep -ic 'HIGH' trivy-fs-report.json || true", returnStdout: true).trim()
+        
+                    echo "🔍 High Issues Found: ${highIssues}"   // <-- PRINT HERE
+        
                     if (highIssues.toInteger() > 0) {
-                        // error("Security Gate #1 FAILED: Trivy FS found high vulnerabilities.")
-                        echo ${highIssues}
-                        echo "⚠ WARNING: Trivy found HIGH vulnerabilities"
-
+                        echo "⚠ WARNING: Trivy found HIGH vulnerabilities (${highIssues})"
+                    } else {
+                        echo "✅ No HIGH vulnerabilities found"
                     }
                 }
             }
@@ -108,7 +110,7 @@ pipeline {
                 script {
                     def critical = sh(script: "grep -ic 'CRITICAL' trivy-image-report.json || true", returnStdout: true).trim()
                     if (critical.toInteger() > 0) {
-                        echo ${critical}
+                        echo "Critical vulnerabilities found: ${critical}"
                         echo "⚠ WARNING: Trivy found HIGH vulnerabilities"
 
                     }
