@@ -158,7 +158,7 @@ pipeline {
                     reportDir: ".",
                     reportFiles: 'trivy-fs-report.json',
                     reportName: 'Trivy FS JSON',
-                    alwaysLinkToLastBuild : true
+                    alwaysLinkToLastBuild : true,
                     allowMissing: true,
                     
                 ])
