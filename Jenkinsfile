@@ -144,7 +144,9 @@ stage('OWASP ZAP DAST Scan') {
         echo "Starting OWASP ZAP Baseline Scan..."
 
         # Run OWASP ZAP Baseline Scan
+
         docker run --rm --network host \
+            --user $(id -u jenkins):$(id -g jenkins) \
             -v \$(pwd):/zap/wrk \
             ghcr.io/zaproxy/zaproxy \
             zap-baseline.py \
@@ -153,6 +155,7 @@ stage('OWASP ZAP DAST Scan') {
             -x zap-report.xml \
             -J zap-json-report.json \
             -I || true
+    
 
         echo "ZAP Baseline Scan Completed. Reports generated:"
         ls -l zap-report.html zap-report.xml zap-json-report.json || true
