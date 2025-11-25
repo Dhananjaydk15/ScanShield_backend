@@ -99,6 +99,10 @@ stage('Debug User') {
                             input(
                                 message: "⚠ Security check requires approval.\nClick PROCEED to continue.",
                                 ok: "PROCEED"
+                                                        if (currentUser != "dhananjay") {
+                            error("❌ Only 'dhananjay' can approve this stage. Current user: ${currentUser}")
+                        }
+                                
                             )
                         } catch (err) {
                             error("❌ Pipeline aborted: Approval not granted by dhananjay.")
