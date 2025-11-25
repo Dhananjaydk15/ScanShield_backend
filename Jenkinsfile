@@ -11,7 +11,16 @@ pipeline {
     }
 
     stages {
-
+stage('Debug User') {
+    steps {
+        script {
+            wrap([$class: 'BuildUser']) {
+                echo "BUILD_USER_ID: ${env.BUILD_USER_ID}"
+                echo "BUILD_USER: ${env.BUILD_USER}"
+            }
+        }
+    }
+}
         /* ================== 1. CLONE ================== */
         stage('Clone Code') {
             steps {
