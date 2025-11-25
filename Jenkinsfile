@@ -118,35 +118,29 @@ pipeline {
         }
 
         /* ================== 10. SECURITY GATE #2 ================== */
-        stage('Security Gate #2 (Image Scan)') {
-            steps {
-                script {
-                    wrap([$class: 'BuildUser']) {
-        
-                        // Get the currently logged-in user
-                        def currentUser = env.BUILD_USER_ID ?: "unknown"
-                        echo "Current User: ${currentUser}"
-        
-                        // Allow approval ONLY by 'dhananjay'
-                        if (currentUser != "dhananjay") {
-                            error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
-                        }
-        
-                        // Manual approval button
-                        try {
-                            input(
-                                message: "⚠ CRITICAL vulnerabilities found.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
-                                ok: "PROCEED"
-                            )
-                        } catch (err) {
-                            error("❌ Pipeline aborted: Approval not granted by dhananjay.")
-                        }
-        
-                        echo "✅ Security approval granted by dhananjay."
-                    }
+stage('Security Gate #2 (Image Scan)') {
+    steps {
+        script {
+            wrap([$class: 'BuildUser']) {
+
+                def currentUser = env.BUILD_USER_ID ?: "unknown"
+                echo "Pipeline Triggered By: ${currentUser}"
+
+                try {
+                    input(
+                        message: "⚠ CRITICAL vulnerabilities found.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
+                        ok: "PROCEED",
+                        submitter: "dhananjay"   // <-- THIS IS THE FIX
+                    )
+                } catch (err) {
+                    error("❌ Pipeline aborted: Approval not granted by dhananjay.")
                 }
+
+                echo "✅ Approval granted by dhananjay."
             }
         }
+    }
+}
 
 
 
