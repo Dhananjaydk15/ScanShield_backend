@@ -75,14 +75,43 @@ pipeline {
         stage('Security Gate #1 (SAST + SCA)') {
             steps {
                 script {
-                    def highIssues = sh(script: "grep -ic 'HIGH' trivy-fs-report.json || true", returnStdout: true).trim()
+                    def highIssues = sh(
+                        script: "grep -ic 'HIGH' trivy-fs-report.json || true",
+                        returnStdout: true
+                    ).trim()
         
-                    echo "🔍 High Issues Found: ${highIssues}"   // <-- PRINT HERE
+                    echo "🔍 HIGH Issues Found in SCA: ${highIssues}"
         
                     if (highIssues.toInteger() > 0) {
-                        echo "⚠ WARNING: Trivy found HIGH vulnerabilities (${highIssues})"
+                        echo "⚠ WARNING: High vulnerabilities found in SCA (${highIssues})"
+        
+                        // Manual Approval Gate
+                        def approval = input(
+                            id: 'SCA_Approval',
+                            message: """
+                            ⚠ HIGH VULNERABILITIES FOUND IN SCA
+                            Count: ${highIssues}
+        
+                            Review the report (trivy-fs-report.json).
+        
+                            👉 Do you want to continue the pipeline?
+                            """,
+                            parameters: [
+                                choice(
+                                    name: 'APPROVE',
+                                    choices: ['NO', 'YES'],
+                                    description: 'Allow pipeline to continue?'
+                                )
+                            ]
+                        )
+        
+                        if (approval == 'NO') {
+                            error("❌ Pipeline stopped by user due to HIGH SCA vulnerabilities.")
+                        }
+        
+                        echo "✅ User approved continuation despite HIGH issues."
                     } else {
-                        echo "✅ No HIGH vulnerabilities found"
+                        echo "✅ No HIGH vulnerabilities found in SCA."
                     }
                 }
             }
@@ -108,11 +137,45 @@ pipeline {
         stage('Security Gate #2 (Image Scan)') {
             steps {
                 script {
-                    def critical = sh(script: "grep -ic 'CRITICAL' trivy-image-report.json || true", returnStdout: true).trim()
+                    def critical = sh(
+                        script: "grep -ic 'CRITICAL' trivy-image-report.json || true",
+                        returnStdout: true
+                    ).trim()
+        
+                    echo "🔍 CRITICAL Issues Found in Image Scan: ${critical}"
+        
                     if (critical.toInteger() > 0) {
-                        echo "Critical vulnerabilities found: ${critical}"
-                        echo "⚠ WARNING: Trivy found HIGH vulnerabilities"
-
+                        echo "⚠ CRITICAL vulnerabilities detected in image scan."
+        
+                        // Manual Approval Gate
+                        def approval = input(
+                            id: 'ImageScan_Approval',
+                            message: """
+                            🚨 CRITICAL VULNERABILITIES FOUND IN DOCKER IMAGE
+                            Count: ${critical}
+        
+                            Review: trivy-image-report.json
+        
+                            ❗ Deployment is risky.
+        
+                            👉 Do you want to continue?
+                            """,
+                            parameters: [
+                                choice(
+                                    name: 'APPROVE',
+                                    choices: ['NO', 'YES'],
+                                    description: 'Allow pipeline to continue?'
+                                )
+                            ]
+                        )
+        
+                        if (approval == 'NO') {
+                            error("❌ Pipeline stopped by user due to CRITICAL image vulnerabilities.")
+                        }
+        
+                        echo "✅ User approved continuation despite CRITICAL issues."
+                    } else {
+                        echo "✅ No CRITICAL vulnerabilities in image scan."
                     }
                 }
             }
