@@ -81,37 +81,26 @@ stage('Debug User') {
         }
 
         /* ================== 7. SECURITY GATE #1 ================== */
-        stage('Security Gate #1 (SAST + SCA)') {
-            steps {
-                script {
-                    wrap([$class: 'BuildUser']) {
-        
-                        // Get user who triggered or is approving
-                        def currentUser = env.BUILD_USER_ID ?: "unknown"
-                        echo "Current User: ${currentUser}"
-        
-                        // Restrict approval
-                        if (currentUser != "dhananjay") {
-                            error("❌ Only 'dhananjay' can approve this stage. Current user: ${currentUser}")
-                        }
-        
-                        try {
-                            input(
-                                message: "⚠ Security check requires approval.\nClick PROCEED to continue.",
-                                ok: "PROCEED"
-                                
-                            )
-                        } catch (err) {
-                            error("❌ Pipeline aborted: Approval not granted by dhananjay.")
-                        }
-                                if (currentUser != "dhananjay") {
-                            error("❌ Only 'dhananjay' can approve this stage. Current user: ${currentUser}")
-                        }
-                        echo "✅ Security approval granted by dhananjay."
-                    }
-                }
+stage('Security Gate #1 (SAST + SCA)') {
+    steps {
+        script {
+            // This input step returns the username of the approver
+            def approver = input(
+                message: "⚠ Security risks detected.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
+                ok: "PROCEED",
+                submitterParameter: "approvedBy"
+            )
+
+            echo "Approval clicked by: ${approver}"
+
+            if (approver != "dhananjay") {
+                error("❌ Only dhananjay can approve this stage. Approval attempted by: ${approver}")
             }
+
+            echo "✅ Security approval granted by dhananjay."
         }
+    }
+}
 
         /* ================== 8. BUILD ================== */
         stage('Build App') {
