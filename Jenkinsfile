@@ -81,27 +81,27 @@ stage('Debug User') {
         }
 
         /* ================== 7. SECURITY GATE #1 ================== */
-stage('Security Gate #1 (SAST + SCA)') {
-    steps {
-        script {
-            // This input step returns the username of the approver
-            def approver = input(
-                message: "⚠ Security risks detected.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
-                ok: "PROCEED",
-                submitterParameter: "approvedBy"
-            )
-
-            echo "Approval clicked by: ${approver}"
-
-            if (approver != "dhananjay") {
-                error("❌ Only dhananjay can approve this stage. Approval attempted by: ${approver}")
+        stage('Security Gate #1 (SAST + SCA)') {
+            steps {
+                script {
+                    // This input step returns the username of the approver
+                    def approver = input(
+                        message: "⚠ Security risks detected.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
+                        ok: "PROCEED",
+                        submitterParameter: "approvedBy"
+                    )
+        
+                    echo "Approval clicked by: ${approver}"
+        
+                    if (approver != "dhananjay") {
+                        error("❌ Only dhananjay can approve this stage. Approval attempted by: ${approver}")
+                    }
+        
+                    echo "✅ Security approval granted by dhananjay."
+                }
             }
-
-            echo "✅ Security approval granted by dhananjay."
         }
-    }
-}
-
+        
         /* ================== 8. BUILD ================== */
         stage('Build App') {
             steps {
@@ -119,29 +119,29 @@ stage('Security Gate #1 (SAST + SCA)') {
         }
 
         /* ================== 10. SECURITY GATE #2 ================== */
-stage('Security Gate #2 (Image Scan)') {
-    steps {
-        script {
-            wrap([$class: 'BuildUser']) {
-
-                def currentUser = env.BUILD_USER_ID ?: "unknown"
-                echo "Pipeline Triggered By: ${currentUser}"
-
-                try {
-                    input(
+        stage('Security Gate #2 (Image Scan)') {
+            steps {
+                script {
+        
+                    // Capture the actual user who clicks PROCEED
+                    def approver = input(
                         message: "⚠ CRITICAL vulnerabilities found.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
                         ok: "PROCEED",
-                        submitter: "dhananjay"   // <-- THIS IS THE FIX
+                        submitterParameter: "approvedBy"   // <-- Capture approver username
                     )
-                } catch (err) {
-                    error("❌ Pipeline aborted: Approval not granted by dhananjay.")
+        
+                    echo "Approval clicked by: ${approver}"
+        
+                    // Verify approver is EXACTLY dhananjay
+                    if (approver != "dhananjay") {
+                        error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+                    }
+        
+                    echo "✅ Approval granted by dhananjay."
                 }
-
-                echo "✅ Approval granted by dhananjay."
             }
         }
-    }
-}
+
 
 
 
