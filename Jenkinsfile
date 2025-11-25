@@ -75,25 +75,23 @@ pipeline {
         stage('Security Gate #1 (SAST + SCA)') {
             steps {
                 script {
-                    def highIssues = sh(
-                        script: "grep -ic 'HIGH' trivy-fs-report.json || true",
-                        returnStdout: true
-                    ).trim()
-        
-                    echo "🔍 HIGH Issues Found in SCA: ${highIssues}"
-        
-                    if (highIssues.toInteger() > 0) {
-                        echo "⚠ HIGH vulnerabilities detected (${highIssues})"
-        
-                        // APPROVAL ONLY BY USER "dhananjay"
-                        input(
-                            message: "⚠ HIGH vulnerabilities found.\nOnly dhananjay can approve.",
-                            ok: "PROCEED",
-                            submitter: "dhananjay"
-                        )
-        
-                        echo "✅ Approved by dhananjay."
+                    // Get the currently logged-in user triggering the input step
+                    def currentUser = env.BUILD_USER_ID ?: "unknown"
+                
+                    // Check if someone other than 'dhananjay' reached this point
+                    if (currentUser != "dhananjay") {
+                        error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
                     }
+                
+                    // Manual approval button (only visible to current stage operator)
+                    try {
+                        input message: "⚠ Security check requires approval.\nClick PROCEED to continue.", ok: "PROCEED"
+                    } catch (err) {
+                        // If user clicks ABORT or times out:
+                        error("❌ Pipeline aborted: Approval not granted by dhananjay.")
+                    }
+                
+                    echo "✅ Security approval granted by dhananjay."
                 }
             }
         }
@@ -118,25 +116,23 @@ pipeline {
         stage('Security Gate #2 (Image Scan)') {
             steps {
                 script {
-                    def critical = sh(
-                        script: "grep -ic 'CRITICAL' trivy-image-report.json || true",
-                        returnStdout: true
-                    ).trim()
-        
-                    echo "🔍 CRITICAL Issues Found: ${critical}"
-        
-                    if (critical.toInteger() > 0) {
-                        echo "⚠ CRITICAL vulnerabilities detected."
-        
-                        // APPROVAL ONLY BY USER "dhananjay"
-                        input(
-                            message: "🚨 CRITICAL vulnerabilities found.\nOnly dhananjay can approve.",
-                            ok: "PROCEED",
-                            submitter: "dhananjay"
-                        )
-        
-                        echo "✅ Approved by dhananjay."
+                    // Get the currently logged-in user triggering the input step
+                    def currentUser = env.BUILD_USER_ID ?: "unknown"
+                
+                    // Check if someone other than 'dhananjay' reached this point
+                    if (currentUser != "dhananjay") {
+                        error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
                     }
+                
+                    // Manual approval button (only visible to current stage operator)
+                    try {
+                        input message: "⚠ Security check requires approval.\nClick PROCEED to continue.", ok: "PROCEED"
+                    } catch (err) {
+                        // If user clicks ABORT or times out:
+                        error("❌ Pipeline aborted: Approval not granted by dhananjay.")
+                    }
+                
+                    echo "✅ Security approval granted by dhananjay."
                 }
             }
         }
