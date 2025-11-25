@@ -84,20 +84,41 @@ stage('Debug User') {
         stage('Security Gate #1 (SAST + SCA)') {
             steps {
                 script {
-                    // This input step returns the username of the approver
-                    def approver = input(
-                        message: "⚠ Security risks detected.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
-                        ok: "PROCEED",
-                        submitterParameter: "approvedBy"
-                    )
         
-                    echo "Approval clicked by: ${approver}"
+                    // Count HIGH vulnerabilities from Trivy FS report
+                    def highCount = sh(
+                        script: "grep -ic 'HIGH' trivy-fs-report.json || true",
+                        returnStdout: true
+                    ).trim()
         
-                    if (approver != "dhananjay") {
-                        error("❌ Only dhananjay can approve this stage. Approval attempted by: ${approver}")
+                    echo "🔍 HIGH Vulnerabilities Found in SCA: ${highCount}"
+        
+                    // Approval needed when High issues exist
+                    if (highCount.toInteger() > 0) {
+        
+                        def approver = input(
+                            message: """
+                            ⚠ HIGH vulnerabilities detected in SCA.
+                            🔢 Count: ${highCount}
+        
+                            Only 'dhananjay' can approve.
+        
+                            Do you want to PROCEED?
+                            """,
+                            ok: "PROCEED",
+                            submitterParameter: "approvedBy"
+                        )
+        
+                        echo "Approval clicked by: ${approver}"
+        
+                        if (approver != "dhananjay") {
+                            error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+                        }
+        
+                        echo "✅ Approved by dhananjay despite HIGH issues."
+                    } else {
+                        echo "✅ No HIGH vulnerabilities found in SCA."
                     }
-        
-                    echo "✅ Security approval granted by dhananjay."
                 }
             }
         }
@@ -123,26 +144,43 @@ stage('Debug User') {
             steps {
                 script {
         
-                    // Capture the actual user who clicks PROCEED
-                    def approver = input(
-                        message: "⚠ CRITICAL vulnerabilities found.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
-                        ok: "PROCEED",
-                        submitterParameter: "approvedBy"   // <-- Capture approver username
-                    )
+                    // Count CRITICAL vulnerabilities from Image Scan
+                    def criticalCount = sh(
+                        script: "grep -ic 'CRITICAL' trivy-image-report.json || true",
+                        returnStdout: true
+                    ).trim()
         
-                    echo "Approval clicked by: ${approver}"
+                    echo "🔍 CRITICAL Vulnerabilities in Image Scan: ${criticalCount}"
         
-                    // Verify approver is EXACTLY dhananjay
-                    if (approver != "dhananjay") {
-                        error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+                    if (criticalCount.toInteger() > 0) {
+        
+                        def approver = input(
+                            message: """
+                            🚨 CRITICAL vulnerabilities detected in Docker Image.
+        
+                            🔢 Count: ${criticalCount}
+        
+                            Only 'dhananjay' can approve this deployment.
+        
+                            Click PROCEED to continue.
+                            """,
+                            ok: "PROCEED",
+                            submitterParameter: "approvedBy"
+                        )
+        
+                        echo "Approval clicked by: ${approver}"
+        
+                        if (approver != "dhananjay") {
+                            error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+                        }
+        
+                        echo "✅ Approved by dhananjay despite CRITICAL issues."
+                    } else {
+                        echo "✅ No CRITICAL vulnerabilities found."
                     }
-        
-                    echo "✅ Approval granted by dhananjay."
                 }
             }
         }
-
-
 
 
         /* ================== 11. DEPLOY ================== */
