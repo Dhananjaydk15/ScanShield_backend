@@ -83,35 +83,16 @@ pipeline {
                     echo "🔍 HIGH Issues Found in SCA: ${highIssues}"
         
                     if (highIssues.toInteger() > 0) {
-                        echo "⚠ WARNING: High vulnerabilities found in SCA (${highIssues})"
+                        echo "⚠ HIGH vulnerabilities detected (${highIssues})"
         
-                        // Manual Approval Gate
-                        def approval = input(
-                            id: 'SCA_Approval',
-                            message: """
-                            ⚠ HIGH VULNERABILITIES FOUND IN SCA
-                            Count: ${highIssues}
-        
-                            Review the report (trivy-fs-report.json).
-        
-                            👉 Do you want to continue the pipeline?
-                            """,
-                            parameters: [
-                                choice(
-                                    name: 'APPROVE',
-                                    choices: ['NO', 'YES'],
-                                    description: 'Allow pipeline to continue?'
-                                )
-                            ]
+                        // APPROVAL ONLY BY USER "dhananjay"
+                        input(
+                            message: "⚠ HIGH vulnerabilities found.\nOnly dhananjay can approve.",
+                            ok: "PROCEED",
+                            submitter: "dhananjay"
                         )
         
-                        if (approval == 'NO') {
-                            error("❌ Pipeline stopped by user due to HIGH SCA vulnerabilities.")
-                        }
-        
-                        echo "✅ User approved continuation despite HIGH issues."
-                    } else {
-                        echo "✅ No HIGH vulnerabilities found in SCA."
+                        echo "✅ Approved by dhananjay."
                     }
                 }
             }
@@ -142,44 +123,24 @@ pipeline {
                         returnStdout: true
                     ).trim()
         
-                    echo "🔍 CRITICAL Issues Found in Image Scan: ${critical}"
+                    echo "🔍 CRITICAL Issues Found: ${critical}"
         
                     if (critical.toInteger() > 0) {
-                        echo "⚠ CRITICAL vulnerabilities detected in image scan."
+                        echo "⚠ CRITICAL vulnerabilities detected."
         
-                        // Manual Approval Gate
-                        def approval = input(
-                            id: 'ImageScan_Approval',
-                            message: """
-                            🚨 CRITICAL VULNERABILITIES FOUND IN DOCKER IMAGE
-                            Count: ${critical}
-        
-                            Review: trivy-image-report.json
-        
-                            ❗ Deployment is risky.
-        
-                            👉 Do you want to continue?
-                            """,
-                            parameters: [
-                                choice(
-                                    name: 'APPROVE',
-                                    choices: ['NO', 'YES'],
-                                    description: 'Allow pipeline to continue?'
-                                )
-                            ]
+                        // APPROVAL ONLY BY USER "dhananjay"
+                        input(
+                            message: "🚨 CRITICAL vulnerabilities found.\nOnly dhananjay can approve.",
+                            ok: "PROCEED",
+                            submitter: "dhananjay"
                         )
         
-                        if (approval == 'NO') {
-                            error("❌ Pipeline stopped by user due to CRITICAL image vulnerabilities.")
-                        }
-        
-                        echo "✅ User approved continuation despite CRITICAL issues."
-                    } else {
-                        echo "✅ No CRITICAL vulnerabilities in image scan."
+                        echo "✅ Approved by dhananjay."
                     }
                 }
             }
         }
+
 
         /* ================== 11. DEPLOY ================== */
         stage('Deploy Application') {
