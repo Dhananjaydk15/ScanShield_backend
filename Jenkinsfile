@@ -75,23 +75,28 @@ pipeline {
         stage('Security Gate #1 (SAST + SCA)') {
             steps {
                 script {
-                    // Get the currently logged-in user triggering the input step
-                    def currentUser = env.BUILD_USER_ID ?: "unknown"
-                
-                    // Check if someone other than 'dhananjay' reached this point
-                    if (currentUser != "dhananjay") {
-                        error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
+                    wrap([$class: 'BuildUser']) {
+        
+                        // Get user who triggered or is approving
+                        def currentUser = env.BUILD_USER_ID ?: "unknown"
+                        echo "Current User: ${currentUser}"
+        
+                        // Restrict approval
+                        if (currentUser != "dhananjay") {
+                            error("❌ Only 'dhananjay' can approve this stage. Current user: ${currentUser}")
+                        }
+        
+                        try {
+                            input(
+                                message: "⚠ Security check requires approval.\nClick PROCEED to continue.",
+                                ok: "PROCEED"
+                            )
+                        } catch (err) {
+                            error("❌ Pipeline aborted: Approval not granted by dhananjay.")
+                        }
+        
+                        echo "✅ Security approval granted by dhananjay."
                     }
-                
-                    // Manual approval button (only visible to current stage operator)
-                    try {
-                        input message: "⚠ Security check requires approval.\nClick PROCEED to continue.", ok: "PROCEED"
-                    } catch (err) {
-                        // If user clicks ABORT or times out:
-                        error("❌ Pipeline aborted: Approval not granted by dhananjay.")
-                    }
-                
-                    echo "✅ Security approval granted by dhananjay."
                 }
             }
         }
@@ -116,26 +121,33 @@ pipeline {
         stage('Security Gate #2 (Image Scan)') {
             steps {
                 script {
-                    // Get the currently logged-in user triggering the input step
-                    def currentUser = env.BUILD_USER_ID ?: "unknown"
-                
-                    // Check if someone other than 'dhananjay' reached this point
-                    if (currentUser != "dhananjay") {
-                        error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
+                    wrap([$class: 'BuildUser']) {
+        
+                        // Get the currently logged-in user
+                        def currentUser = env.BUILD_USER_ID ?: "unknown"
+                        echo "Current User: ${currentUser}"
+        
+                        // Allow approval ONLY by 'dhananjay'
+                        if (currentUser != "dhananjay") {
+                            error("❌ Only 'dhananjay' is allowed to approve this stage. Current user: ${currentUser}")
+                        }
+        
+                        // Manual approval button
+                        try {
+                            input(
+                                message: "⚠ CRITICAL vulnerabilities found.\nOnly 'dhananjay' can approve.\nClick PROCEED to continue.",
+                                ok: "PROCEED"
+                            )
+                        } catch (err) {
+                            error("❌ Pipeline aborted: Approval not granted by dhananjay.")
+                        }
+        
+                        echo "✅ Security approval granted by dhananjay."
                     }
-                
-                    // Manual approval button (only visible to current stage operator)
-                    try {
-                        input message: "⚠ Security check requires approval.\nClick PROCEED to continue.", ok: "PROCEED"
-                    } catch (err) {
-                        // If user clicks ABORT or times out:
-                        error("❌ Pipeline aborted: Approval not granted by dhananjay.")
-                    }
-                
-                    echo "✅ Security approval granted by dhananjay."
                 }
             }
         }
+
 
 
         /* ================== 11. DEPLOY ================== */
