@@ -112,15 +112,15 @@ pipeline {
         //     }
         // }
 
-        // ================== 11. DEPLOY ==================
-        // stage('Deploy Application') {
-        //     steps {
-        //         sh """
-        //         docker rm -f scanshield || true
-        //         docker run -d --name scanshield -p 8000:8000 ${IMAGE_NAME}
-        //         """
-        //     }
-        // }
+        ================== 11. DEPLOY ==================
+        stage('Deploy Application') {
+            steps {
+                sh """
+                docker rm -f scanshield || true
+                docker run -d --name scanshield -p 8000:8000 ${IMAGE_NAME}
+                """
+            }
+        }
 
         // ================== 12. DAST ==================
         // stage('DAST - OWASP ZAP Scan') {
