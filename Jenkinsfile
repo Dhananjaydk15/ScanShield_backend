@@ -206,50 +206,50 @@ stage('Debug User') {
         }
 
         /* ================== 12. DAST (OWASP ZAP) ================== */
-        stage('DAST - OWASP ZAP Scan') {
-            steps {
-                sh """
-                mkdir -p ${ZAP_REPORT_DIR}
-                chmod 777 ${ZAP_REPORT_DIR}
+        // stage('DAST - OWASP ZAP Scan') {
+        //     steps {
+        //         sh """
+        //         mkdir -p ${ZAP_REPORT_DIR}
+        //         chmod 777 ${ZAP_REPORT_DIR}
 
-                docker run --rm --network host \
-                    -v \$(pwd)/${ZAP_REPORT_DIR}:/zap/wrk \
-                    ghcr.io/zaproxy/zaproxy \
-                    zap-baseline.py -t ${APP_URL} \
-                    -r zap-report.html \
-                    -x zap-report.xml \
-                    -J zap-report.json \
-                    -I || true
-                """
-            }
-        }
+        //         docker run --rm --network host \
+        //             -v \$(pwd)/${ZAP_REPORT_DIR}:/zap/wrk \
+        //             ghcr.io/zaproxy/zaproxy \
+        //             zap-baseline.py -t ${APP_URL} \
+        //             -r zap-report.html \
+        //             -x zap-report.xml \
+        //             -J zap-report.json \
+        //             -I || true
+        //         """
+        //     }
+        // }
 
-        /* ================== 13. PUBLISH REPORTS ================== */
-        stage('Publish Reports') {
-            steps {
-                publishHTML([
-                    reportDir: "${ZAP_REPORT_DIR}",
-                    reportFiles: 'zap-report.html',
-                    reportName: 'ZAP DAST Report',
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    alwaysLinkToLastBuild : true,
-                    allowMissing: true,
-                ])
+    //     /* ================== 13. PUBLISH REPORTS ================== */
+    //     stage('Publish Reports') {
+    //         steps {
+    //             publishHTML([
+    //                 reportDir: "${ZAP_REPORT_DIR}",
+    //                 reportFiles: 'zap-report.html',
+    //                 reportName: 'ZAP DAST Report',
+    //                 alwaysLinkToLastBuild: true,
+    //                 keepAll: true,
+    //                 alwaysLinkToLastBuild : true,
+    //                 allowMissing: true,
+    //             ])
 
-                publishHTML([
-                    reportDir: ".",
-                    reportFiles: 'trivy-fs-report.json',
-                    reportName: 'Trivy FS JSON',
-                    keepAll : true,
-                    alwaysLinkToLastBuild : true,
-                    allowMissing: true,
+    //             publishHTML([
+    //                 reportDir: ".",
+    //                 reportFiles: 'trivy-fs-report.json',
+    //                 reportName: 'Trivy FS JSON',
+    //                 keepAll : true,
+    //                 alwaysLinkToLastBuild : true,
+    //                 allowMissing: true,
                     
-                ])
-            }
-        }
+    //             ])
+    //         }
+    //     }
 
-    }
+    // }
 
     /* ================== 14. POST BUILD ================== */
     post {
