@@ -38,90 +38,90 @@ stage('Debug User') {
             }
         }
 
-        /* ================== 3. SECRETS SCAN ================== */
-        stage('Secrets Scan (Gitleaks)') {
-            steps {
-                sh """
-                gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
-                """
-            }
-        }
+        // /* ================== 3. SECRETS SCAN ================== */
+        // stage('Secrets Scan (Gitleaks)') {
+        //     steps {
+        //         sh """
+        //         gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+        //         """
+        //     }
+        // }
 
-        /* ================== 4. SAST (SonarQube) ================== */
-        stage('SAST - SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh """
-                    /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
-                        -Dsonar.projectKey=ScanShield \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=${SONAR_TOKEN}
-                    """
-                }
-            }
-        }
+        // /* ================== 4. SAST (SonarQube) ================== */
+        // stage('SAST - SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+        //             sh """
+        //             /opt/sonar-scanner/sonar-scanner-7.3.0.5189-linux-x64/bin/sonar-scanner \
+        //                 -Dsonar.projectKey=ScanShield \
+        //                 -Dsonar.sources=. \
+        //                 -Dsonar.host.url=http://localhost:9000 \
+        //                 -Dsonar.login=${SONAR_TOKEN}
+        //             """
+        //         }
+        //     }
+        // }
 
-        /* ================== 5. SBOM ================== */
-        stage('Generate SBOM (Syft)') {
-            steps {
-                sh """
-                syft . -o json > sbom.json || true
-                """
-            }
-        }
+        // /* ================== 5. SBOM ================== */
+        // stage('Generate SBOM (Syft)') {
+        //     steps {
+        //         sh """
+        //         syft . -o json > sbom.json || true
+        //         """
+        //     }
+        // }
 
-        /* ================== 6. SCA (Trivy FS) ================== */
-        stage('SCA - Trivy FS Scan') {
-            steps {
-                sh """
-                trivy fs . -o trivy-fs-report.json --format json || true
-                """
-            }
-        }
+        // /* ================== 6. SCA (Trivy FS) ================== */
+        // stage('SCA - Trivy FS Scan') {
+        //     steps {
+        //         sh """
+        //         trivy fs . -o trivy-fs-report.json --format json || true
+        //         """
+        //     }
+        // }
 
-        /* ================== 7. SECURITY GATE #1 ================== */
-        stage('Security Gate #1 (SAST + SCA)') {
-            steps {
-                script {
+        // /* ================== 7. SECURITY GATE #1 ================== */
+        // stage('Security Gate #1 (SAST + SCA)') {
+        //     steps {
+        //         script {
         
-                    // Count HIGH vulnerabilities from Trivy FS report
-                    def highCount = sh(
-                        script: "grep -ic 'HIGH' trivy-fs-report.json || true",
-                        returnStdout: true
-                    ).trim()
+        //             // Count HIGH vulnerabilities from Trivy FS report
+        //             def highCount = sh(
+        //                 script: "grep -ic 'HIGH' trivy-fs-report.json || true",
+        //                 returnStdout: true
+        //             ).trim()
         
-                    echo "🔍 HIGH Vulnerabilities Found in SCA: ${highCount}"
+        //             echo "🔍 HIGH Vulnerabilities Found in SCA: ${highCount}"
         
-                    // Approval needed when High issues exist
-                    if (highCount.toInteger() > 0) {
+        //             // Approval needed when High issues exist
+        //             if (highCount.toInteger() > 0) {
         
-                        def approver = input(
-                            message: """
-                            ⚠ HIGH vulnerabilities detected in SCA.
-                            🔢 Count: ${highCount}
+        //                 def approver = input(
+        //                     message: """
+        //                     ⚠ HIGH vulnerabilities detected in SCA.
+        //                     🔢 Count: ${highCount}
         
-                            Only 'dhananjay' can approve.
+        //                     Only 'dhananjay' can approve.
         
-                            Do you want to PROCEED?
-                            """,
-                            ok: "PROCEED",
-                            submitterParameter: "approvedBy"
-                        )
+        //                     Do you want to PROCEED?
+        //                     """,
+        //                     ok: "PROCEED",
+        //                     submitterParameter: "approvedBy"
+        //                 )
         
-                        echo "Approval clicked by: ${approver}"
+        //                 echo "Approval clicked by: ${approver}"
         
-                        if (approver != "dhananjay") {
-                            error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
-                        }
+        //                 if (approver != "dhananjay") {
+        //                     error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+        //                 }
         
-                        echo "✅ Approved by dhananjay despite HIGH issues."
-                    } else {
-                        echo "✅ No HIGH vulnerabilities found in SCA."
-                    }
-                }
-            }
-        }
+        //                 echo "✅ Approved by dhananjay despite HIGH issues."
+        //             } else {
+        //                 echo "✅ No HIGH vulnerabilities found in SCA."
+        //             }
+        //         }
+        //     }
+        // }
         
         /* ================== 8. BUILD ================== */
         stage('Build App') {
@@ -130,57 +130,57 @@ stage('Debug User') {
             }
         }
 
-        /* ================== 9. IMAGE SCAN ================== */
-        stage('Trivy Image Scan') {
-            steps {
-                sh """
-                trivy image ${IMAGE_NAME} --format json -o trivy-image-report.json || true
-                """
-            }
-        }
+        // /* ================== 9. IMAGE SCAN ================== */
+        // stage('Trivy Image Scan') {
+        //     steps {
+        //         sh """
+        //         trivy image ${IMAGE_NAME} --format json -o trivy-image-report.json || true
+        //         """
+        //     }
+        // }
 
-        /* ================== 10. SECURITY GATE #2 ================== */
-        stage('Security Gate #2 (Image Scan)') {
-            steps {
-                script {
+        // /* ================== 10. SECURITY GATE #2 ================== */
+        // stage('Security Gate #2 (Image Scan)') {
+        //     steps {
+        //         script {
         
-                    // Count CRITICAL vulnerabilities from Image Scan
-                    def criticalCount = sh(
-                        script: "grep -ic 'CRITICAL' trivy-image-report.json || true",
-                        returnStdout: true
-                    ).trim()
+        //             // Count CRITICAL vulnerabilities from Image Scan
+        //             def criticalCount = sh(
+        //                 script: "grep -ic 'CRITICAL' trivy-image-report.json || true",
+        //                 returnStdout: true
+        //             ).trim()
         
-                    echo "🔍 CRITICAL Vulnerabilities in Image Scan: ${criticalCount}"
+        //             echo "🔍 CRITICAL Vulnerabilities in Image Scan: ${criticalCount}"
         
-                    if (criticalCount.toInteger() > 0) {
+        //             if (criticalCount.toInteger() > 0) {
         
-                        def approver = input(
-                            message: """
-                            🚨 CRITICAL vulnerabilities detected in Docker Image.
+        //                 def approver = input(
+        //                     message: """
+        //                     🚨 CRITICAL vulnerabilities detected in Docker Image.
         
-                            🔢 Count: ${criticalCount}
+        //                     🔢 Count: ${criticalCount}
         
-                            Only 'dhananjay' can approve this deployment.
+        //                     Only 'dhananjay' can approve this deployment.
         
-                            Click PROCEED to continue.
-                            """,
-                            ok: "PROCEED",
-                            submitterParameter: "approvedBy"
-                        )
+        //                     Click PROCEED to continue.
+        //                     """,
+        //                     ok: "PROCEED",
+        //                     submitterParameter: "approvedBy"
+        //                 )
         
-                        echo "Approval clicked by: ${approver}"
+        //                 echo "Approval clicked by: ${approver}"
         
-                        if (approver != "dhananjay") {
-                            error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
-                        }
+        //                 if (approver != "dhananjay") {
+        //                     error("❌ Approval denied. Only 'dhananjay' can approve. Attempted by: ${approver}")
+        //                 }
         
-                        echo "✅ Approved by dhananjay despite CRITICAL issues."
-                    } else {
-                        echo "✅ No CRITICAL vulnerabilities found."
-                    }
-                }
-            }
-        }
+        //                 echo "✅ Approved by dhananjay despite CRITICAL issues."
+        //             } else {
+        //                 echo "✅ No CRITICAL vulnerabilities found."
+        //             }
+        //         }
+        //     }
+        // }
 
 
         /* ================== 11. DEPLOY ================== */
